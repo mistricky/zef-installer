@@ -35,7 +35,10 @@ my $address-processor = -> Str $address {
 }
 
 my $name-processor = -> Str $name, Bool $is-local {
-	$zef-install()
+	my Str $prefix = $is-local ?? "./" !! "";
+	my Str $parsed-name = $prefix ~ $name;
+
+	$zef-install($parsed-name)
 }
 
 my $dispatcher = -> Str $p, Bool $is-local {
@@ -46,29 +49,17 @@ my $dispatcher = -> Str $p, Bool $is-local {
 	}
 }
 
-sub MAIN(Str :package-addr(:$p)){
-	my Str $is-local = "N";
-
+sub MAIN(Str :package-addr(:$p), Bool :is-local(:$l) = False){
 	loop {
 		unless $p.defined && so $p {
 			say "Do you forget input address of package or package name?";
 			$p := prompt "package name or address of package";
 
-			last if is-address($p);
-
 			next;
-		}
-
-		$is-local := prompt "Install $p in local? (Y/N)";
-
-		unless $is-local.uc eq "N"|"Y" {
-				say "Please choose N or Y";
-
-				next;
 		}
 
 		last;
 	}
 
-	$dispatcher($p, to-bool $is-local)
+	$dispatcher($p, $l)
 }
